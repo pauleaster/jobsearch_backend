@@ -15,12 +15,22 @@ const pool = new Pool({
   port: parseInt(config.DATABASE.DB_PORT, 10),
 });
 
-const getValidJobsAndSearchTerms = async () => {
-  const sqlQueryPath = path.join(__dirname, '..', '..', 'queries', 'jobs', 'getValidJobsAndSearchTerms.sql');
+const executeQueryFromFile = async (filePath, params = []) => {
+  const sqlQueryPath = path.join(__dirname, '..', '..', filePath);
   const sqlQuery = fs.readFileSync(sqlQueryPath, 'utf-8');
-  return await pool.query(sqlQuery);
+  return await pool.query(sqlQuery, params);
 };
+
+const getValidJobsAndSearchTerms = async () => {
+  return await executeQueryFromFile('queries/jobs/getValidJobsAndSearchTerms.sql');
+};
+
+const getJobDetailsById = async (jobId) => {
+  return await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
+};
+
 
 module.exports = {
   getValidJobsAndSearchTerms,
+  getJobDetailsById,
 };
