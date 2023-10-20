@@ -44,11 +44,13 @@ const executeQueryFromString = async (queryString, params = []) => {
 };
 
 const getValidJobsAndSearchTerms = async () => {
-  return await executeQueryFromFile('queries/jobs/getValidJobsAndSearchTerms.sql');
+  const result = await executeQueryFromFile('queries/jobs/getValidJobsAndSearchTerms.sql');
+  return result.rows;
 };
 
 const getJobDetailsById = async (jobId) => {
-  return await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
+  const result = await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
+  return result.rows;
 };
 
 const getJobHtmlById = async (jobId) => {
