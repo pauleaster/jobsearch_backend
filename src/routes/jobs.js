@@ -14,20 +14,27 @@ const handleAsyncRoute = (asyncFn) => {
 };
 
 
-router.get('/validJobsAndSearchTerms', handleAsyncRoute(async () => await db.getValidJobsAndSearchTerms()));
+router.get('/validJobsAndSearchTerms', handleAsyncRoute(async (req, res) => {
+  const data = await db.getValidJobsAndSearchTerms();
+  res.json(data);
+}));
 
-router.get('/job/:jobId', handleAsyncRoute(async (req) => await db.getJobDetailsById(req.params.jobId)));
+
+router.get('/job/:jobId', handleAsyncRoute(async (req, res) => {
+  const data = await db.getJobDetailsById(req.params.jobId);
+  res.json(data);
+}));
+
 
 router.get('/job/:jobId/html', handleAsyncRoute(async (req, res) => {
-  const jobId = req.params.jobId;
-  const jobHtml = await db.getJobHtmlById(jobId);
+  const data = await db.getJobHtmlById(req.params.jobId);
 
   // Check if the job exists
-  if (jobHtml.length === 0) {
+  if (!data || data.length === 0) {
       return res.status(404).json({ error: 'Job not found' });
   }
 
-  return res.json({ jobHtml: jobHtml[0].job_html });
+  return res.json({ jobHtml: data[0].job_html });
 }));
 
 
