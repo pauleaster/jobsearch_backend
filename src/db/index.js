@@ -7,6 +7,19 @@ const ini = require('ini');
 const configPath = `${process.env.HOME}/.scraper/scraper.conf`;
 const config = ini.parse(fs.readFileSync(configPath, 'utf-8'));
 
+const AllowedFields = {
+  TITLE: "title",
+  JOB_URL: "job_url",
+  COMMENTS: "comments",
+  REQUIREMENTS: "requirements",
+  FOLLOW_UP: "follow_up",
+  HIGHLIGHT: "highlight",
+  APPLIED: "applied",
+  CONTACT: "contact",
+  APPLICATION_COMMENTS: "application_comments",
+};
+
+
 const pool = new Pool({
   user: config.DATABASE.DB_USER,
   host: config.DATABASE.DB_HOST,
@@ -15,10 +28,18 @@ const pool = new Pool({
   port: parseInt(config.DATABASE.DB_PORT, 10),
 });
 
-const executeQueryFromFile = async (filePath, params = []) => {
+const readQueryFromFile = (filePath) => {
   const sqlQueryPath = path.join(__dirname, '..', '..', filePath);
-  const sqlQuery = fs.readFileSync(sqlQueryPath, 'utf-8');
+  return fs.readFileSync(sqlQueryPath, 'utf-8');
+};
+
+const executeQueryFromFile = async (filePath, params = []) => {
+  const sqlQuery = readQueryFromFile(filePath);
   return await pool.query(sqlQuery, params);
+};
+
+const executeQueryFromString = async (queryString, params = []) => {
+  return await pool.query(queryString, params);
 };
 
 const getValidJobsAndSearchTerms = async () => {
@@ -29,8 +50,22 @@ const getJobDetailsById = async (jobId) => {
   return await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
 };
 
+const updateJobField = async (jobId, field, value) => {
+  // Check if the field is allowed
+  if (!Object.values(AllowedFields).includes(field)) {
+    throw new Error("Invalid field provided");
+  }
+
+  const sqlQuery = readQueryFromFile('queries/jobs/updateJobField.sql');
+  const updatedSqlQuery = sqlQuery.replace('{FIELD}', field);
+
+  return await executeQueryFromString(updatedSqlQuery, [value, jobId]);
+};
+
 
 module.exports = {
   getValidJobsAndSearchTerms,
   getJobDetailsById,
+  updateJobField,
+  AllowedFields,
 };
