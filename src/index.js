@@ -3,6 +3,7 @@ const cors = require('cors'); // Import CORS middleware
 const jobRoutes = require('./routes/jobs');
 
 const app = express();
+app.use(express.json()); // Use the built-in JSON parser
 const port = 3001;
 
 app.use(cors()); // Use the CORS middleware
