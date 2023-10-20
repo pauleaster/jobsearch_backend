@@ -35,7 +35,8 @@ const readQueryFromFile = (filePath) => {
 
 const executeQueryFromFile = async (filePath, params = []) => {
   const sqlQuery = readQueryFromFile(filePath);
-  return await pool.query(sqlQuery, params);
+  result = await pool.query(sqlQuery, params);
+  return result;
 };
 
 const executeQueryFromString = async (queryString, params = []) => {
@@ -49,6 +50,12 @@ const getValidJobsAndSearchTerms = async () => {
 const getJobDetailsById = async (jobId) => {
   return await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
 };
+
+const getJobHtmlById = async (jobId) => {
+  const result = await executeQueryFromFile('queries/jobs/getJobHtmlById.sql', [jobId]);
+  return result.rows;
+};
+
 
 const updateJobField = async (jobId, field, value) => {
   // Check if the field is allowed
@@ -66,6 +73,7 @@ const updateJobField = async (jobId, field, value) => {
 module.exports = {
   getValidJobsAndSearchTerms,
   getJobDetailsById,
+  getJobHtmlById,
   updateJobField,
   AllowedFields,
 };
