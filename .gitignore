@@ -131,3 +131,4 @@ dist
 
 # local jobsearch database backup
 *jobsearch_backup*.sql
+sql_backups/

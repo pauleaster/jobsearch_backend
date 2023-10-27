@@ -8,7 +8,7 @@ read base_filename
 timestamp=$(date "+%Y%m%d_%H%M%S")
 
 # Construct the full filename
-backup_filename="${timestamp}_${base_filename}.sql"
+backup_filename="../sql_backups/${timestamp}_${base_filename}.sql"
 
 # Confirm with the user
 echo "The backup will be saved to: $backup_filename"
