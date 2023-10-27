@@ -58,6 +58,20 @@ const getJobHtmlById = async (jobId) => {
   return result.rows;
 };
 
+const getFilteredValidJobsAndSearchTerms = async (filterTerms) => {
+  const queryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms.sql';
+  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [];
+  const result = await executeQueryFromFile(queryFile, params);
+  return result.rows;
+};
+
+// getSearchTerms
+const getSearchTerms = async () => {
+  const response = await executeQueryFromFile('queries/jobs/getSearchTerms.sql');
+  result = response.rows.map(row => row.term_text);
+  return result;
+};
+
 
 const updateJobField = async (jobId, field, value) => {
   // Check if the field is allowed
@@ -74,8 +88,10 @@ const updateJobField = async (jobId, field, value) => {
 
 module.exports = {
   getValidJobsAndSearchTerms,
+  getFilteredValidJobsAndSearchTerms,
   getJobDetailsById,
   getJobHtmlById,
+  getSearchTerms,
   updateJobField,
   AllowedFields,
 };

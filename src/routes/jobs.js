@@ -19,6 +19,12 @@ router.get('/validJobsAndSearchTerms', handleAsyncRoute(async (req, res) => {
   res.json(data);
 }));
 
+router.post('/filteredJobsAndSearchTerms', handleAsyncRoute(async (req, res) => {
+  const filterTerms = req.body.filterTerms || [];
+  const data = await db.getFilteredValidJobsAndSearchTerms(filterTerms);
+  res.json(data);
+}));
+
 
 router.get('/job/:jobId', handleAsyncRoute(async (req, res) => {
   const data = await db.getJobDetailsById(req.params.jobId);
@@ -37,14 +43,18 @@ router.get('/job/:jobId/html', handleAsyncRoute(async (req, res) => {
   return res.json({ jobHtml: data[0].job_html });
 }));
 
-
+router.get('/searchTerms', handleAsyncRoute(async (req, res) => {
+  const data = await db.getSearchTerms();
+  res.json(data);
+}));
 
 // New endpoint to update specific fields of a job
 router.patch('/job/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const { field, value } = req.body;  // Field to update and its new value
+    let { field, value } = req.body;  // Field to update and its new value
 
+    field = field.toLowerCase();
     // Validate if the field is allowed to be updated
     if (!Object.values(db.AllowedFields).includes(field)) {
       return res.status(400).json({ error: 'Invalid field provided for update' });
