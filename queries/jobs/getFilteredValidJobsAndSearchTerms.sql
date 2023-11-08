@@ -11,7 +11,6 @@ WITH ValidJobTerms AS (
         search_terms st ON jst.term_id = st.term_id
     WHERE 
         jst.valid = True
-        AND (st.term_text = ANY($1) OR $1 IS NULL)
 )
 
 , AggregatedTerms AS (
@@ -19,11 +18,13 @@ WITH ValidJobTerms AS (
         job_id,
         job_number,
         STRING_AGG(term_text, ', ') AS matching_terms,
-        COUNT(term_text) AS term_count
+        COUNT(term_text) FILTER (WHERE term_text = ANY($1) OR $1 IS NULL) AS term_count
     FROM 
         ValidJobTerms
     GROUP BY 
         job_id, job_number
+    HAVING
+        COUNT(term_text) FILTER (WHERE term_text = ANY($1) OR $1 IS NULL) > 0
 )
 
 SELECT 
