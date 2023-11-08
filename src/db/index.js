@@ -34,9 +34,18 @@ const readQueryFromFile = (filePath) => {
 };
 
 const executeQueryFromFile = async (filePath, params = []) => {
+  console.log("params:", params);
+  console.log("params length:", params.length);
+  // console.log("params is an array:", Array.isArray(params));
   const sqlQuery = readQueryFromFile(filePath);
-  result = await pool.query(sqlQuery, params);
-  return result;
+  // console.log("sqlQuery:", sqlQuery);
+  try{
+    result = await pool.query(sqlQuery, params);
+    return result;
+  } catch(error) {
+    console.log("error:", error);
+    throw error;
+  }
 };
 
 const executeQueryFromString = async (queryString, params = []) => {

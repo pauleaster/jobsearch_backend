@@ -17,8 +17,8 @@ WITH ValidJobTerms AS (
     SELECT 
         job_id,
         job_number,
-        STRING_AGG(term_text, ', ') AS matching_terms,
-        COUNT(term_text) FILTER (WHERE term_text = ANY($1) OR $1 IS NULL) AS term_count
+        STRING_AGG(term_text, ', ' ORDER BY term_text) AS matching_terms,
+        COUNT(*) AS total_term_count
     FROM 
         ValidJobTerms
     GROUP BY 
@@ -34,4 +34,4 @@ SELECT
 FROM 
     AggregatedTerms
 ORDER BY 
-    term_count DESC, matching_terms;
+    total_term_count DESC, matching_terms;
