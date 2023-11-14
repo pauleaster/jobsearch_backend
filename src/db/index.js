@@ -85,10 +85,17 @@ const getJobHtmlById = async (jobId) => {
 
 const getFilteredValidJobsAndSearchTerms = async (filterTerms) => {
   const queryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms.sql';
-  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [];
+
+  // Join the filter terms array into a comma-separated string
+  const filterTermsString = filterTerms.join(',');
+
+  // Pass the string as a parameter
+  const params = { filterTerms: filterTermsString };
   const result = await executeQueryFromFile(queryFile, params);
+
   return result.rows;
 };
+
 
 // getSearchTerms
 const getSearchTerms = async () => {
@@ -107,8 +114,12 @@ const updateJobField = async (jobId, field, value) => {
   const sqlQuery = readQueryFromFile('queries/jobs/updateJobField.sql');
   const updatedSqlQuery = sqlQuery.replace('{FIELD}', field);
 
-  return await executeQueryFromString(updatedSqlQuery, [value, jobId]);
+  // Pass parameters as an object
+  const params = { value: value, jobId: jobId };
+
+  return await executeQueryFromString(updatedSqlQuery, params);
 };
+
 
 
 module.exports = {

@@ -1,1 +1,1 @@
-UPDATE jobs SET {FIELD} = $1 WHERE job_id = @jobId;
+UPDATE jobs SET {FIELD} = @value WHERE job_id = @jobId;
