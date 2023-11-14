@@ -10,7 +10,7 @@ WITH ValidJobTerms AS (
     JOIN 
         search_terms st ON jst.term_id = st.term_id
     WHERE 
-        jst.valid = True
+        jst.valid = 1  -- Adjusted for T-SQL
 )
 
 , AggregatedTerms AS (
@@ -24,7 +24,7 @@ WITH ValidJobTerms AS (
     GROUP BY 
         job_id, job_number
     HAVING
-        COUNT(term_text) FILTER (WHERE term_text = ANY($1) OR $1 IS NULL) > 0
+        SUM(CASE WHEN @YourTermList IS NULL OR term_text IN (SELECT value FROM STRING_SPLIT(@YourTermList, ',')) THEN 1 ELSE 0 END) > 0
 )
 
 SELECT 
