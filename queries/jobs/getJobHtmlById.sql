@@ -3,4 +3,4 @@ SELECT
 FROM 
     jobs 
 WHERE 
-    job_id = @jobId;
+    job_id = $1;

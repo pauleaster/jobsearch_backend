@@ -10,7 +10,7 @@ WITH ValidJobTerms AS (
     JOIN 
         search_terms st ON jst.term_id = st.term_id
     WHERE 
-        jst.valid = 1
+        jst.valid = True
 )
 
 , AggregatedTerms AS (
