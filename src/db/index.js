@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const odbc = require('odbc');
 const fs = require('fs');
 const path = require('path');
 const ini = require('ini');
@@ -6,6 +6,10 @@ const ini = require('ini');
 // Read the configuration file
 const configPath = `${process.env.HOME}/.scraper/scraper.conf`;
 const config = ini.parse(fs.readFileSync(configPath, 'utf-8'));
+
+// DB is SQL Server:
+const connectionString = `Driver={SQL Server};Server=${config.DATABASE.DB_HOST};Database=${config.DATABASE.DB_NAME};Trusted_Connection=yes;`;
+
 
 const AllowedFields = {
   TITLE: "title",
@@ -20,13 +24,10 @@ const AllowedFields = {
 };
 
 
-const pool = new Pool({
-  user: config.DATABASE.DB_USER,
-  host: config.DATABASE.DB_HOST,
-  database: config.DATABASE.DB_NAME,
-  password: config.DATABASE.DB_PASSWORD,
-  port: parseInt(config.DATABASE.DB_PORT, 10),
-});
+// Connect to the database using Windows Authentication
+const connectToDatabase = async () => {
+  return await odbc.connect(connectionString);
+};
 
 const readQueryFromFile = (filePath) => {
   const sqlQueryPath = path.join(__dirname, '..', '..', filePath);
@@ -36,20 +37,29 @@ const readQueryFromFile = (filePath) => {
 const executeQueryFromFile = async (filePath, params = []) => {
   console.log("params:", params);
   console.log("params length:", params.length);
-  // console.log("params is an array:", Array.isArray(params));
+
   const sqlQuery = readQueryFromFile(filePath);
-  // console.log("sqlQuery:", sqlQuery);
-  try{
-    result = await pool.query(sqlQuery, params);
+  try {
+    const connection = await connectToDatabase();
+    const result = await connection.query(sqlQuery, params);
+    await connection.close();
     return result;
-  } catch(error) {
-    console.log("error:", error);
+  } catch (error) {
+    console.error("error:", error);
     throw error;
   }
 };
 
 const executeQueryFromString = async (queryString, params = []) => {
-  return await pool.query(queryString, params);
+  try {
+    const connection = await connectToDatabase();
+    const result = await connection.query(queryString, params);
+    await connection.close();
+    return result;
+  } catch (error) {
+    console.error("error:", error);
+    throw error;
+  }
 };
 
 const getValidJobsAndSearchTerms = async () => {
@@ -58,12 +68,18 @@ const getValidJobsAndSearchTerms = async () => {
 };
 
 const getJobDetailsById = async (jobId) => {
-  const result = await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
+
+  const params = { jobId: jobId };
+
+  const result = await executeQueryFromFile('queries/jobs/getJobById.sql', params);
   return result.rows;
 };
 
 const getJobHtmlById = async (jobId) => {
-  const result = await executeQueryFromFile('queries/jobs/getJobHtmlById.sql', [jobId]);
+
+  const params = { jobId: jobId };
+
+  const result = await executeQueryFromFile('queries/jobs/getJobHtmlById.sql', params);
   return result.rows;
 };
 
