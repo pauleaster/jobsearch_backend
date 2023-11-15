@@ -1,1 +1,1 @@
-UPDATE jobs SET {FIELD} = $1 WHERE job_id = $2;
+UPDATE jobs SET {FIELD} = ? WHERE job_id = ?;

@@ -1,0 +1,5 @@
+{
+    "watch": ["src/", "*.sql"],
+    "ext": "js,json,sql"
+  }
+  

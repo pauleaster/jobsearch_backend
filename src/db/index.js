@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const odbc = require('odbc');
 const fs = require('fs');
 const path = require('path');
 const ini = require('ini');
@@ -6,6 +6,34 @@ const ini = require('ini');
 // Read the configuration file
 const configPath = `${process.env.HOME}/.scraper/scraper.conf`;
 const config = ini.parse(fs.readFileSync(configPath, 'utf-8'));
+
+// DB is SQL Server:
+const connectionString = `Driver={SQL Server};Server=${config.DATABASE.DB_HOST};Database=${config.DATABASE.DB_NAME};Trusted_Connection=yes;`;
+
+let connection = null;
+let connectionTimer = null;
+const idleTime = 60000; // 60 seconds
+
+const resetConnectionTimer = () => {
+  if (connectionTimer) clearTimeout(connectionTimer);
+  connectionTimer = setTimeout(disconnectDatabase, idleTime);
+};
+
+const connectToDatabase = async () => {
+  if (!connection) {
+    connection = await odbc.connect(connectionString);
+    resetConnectionTimer();
+  }
+  return connection;
+};
+
+const disconnectDatabase = async () => {
+  if (connection) {
+    await connection.close();
+    connection = null;
+  }
+};
+
 
 const AllowedFields = {
   TITLE: "title",
@@ -20,64 +48,103 @@ const AllowedFields = {
 };
 
 
-const pool = new Pool({
-  user: config.DATABASE.DB_USER,
-  host: config.DATABASE.DB_HOST,
-  database: config.DATABASE.DB_NAME,
-  password: config.DATABASE.DB_PASSWORD,
-  port: parseInt(config.DATABASE.DB_PORT, 10),
-});
-
 const readQueryFromFile = (filePath) => {
   const sqlQueryPath = path.join(__dirname, '..', '..', filePath);
   return fs.readFileSync(sqlQueryPath, 'utf-8');
 };
 
 const executeQueryFromFile = async (filePath, params = []) => {
-  console.log("params:", params);
-  console.log("params length:", params.length);
-  // console.log("params is an array:", Array.isArray(params));
+  console.log("executeQueryFromFile: params:", params);
+  console.log("executeQueryFromFile: params length:", params.length);
+
   const sqlQuery = readQueryFromFile(filePath);
-  // console.log("sqlQuery:", sqlQuery);
-  try{
-    result = await pool.query(sqlQuery, params);
+  const connection = await connectToDatabase();
+  try {
+    const result = await connection.query(sqlQuery, params);
+    resetConnectionTimer();
+    console.log("executeQueryFromFile: :result:", result);
     return result;
-  } catch(error) {
-    console.log("error:", error);
+  } catch (error) {
+    console.error("executeQueryFromFile: : error:", error);
     throw error;
   }
 };
 
 const executeQueryFromString = async (queryString, params = []) => {
-  return await pool.query(queryString, params);
+  const connection = await connectToDatabase();
+  try {
+    console.log("executeQueryFromString: params:", params);
+    console.log("executeQueryFromString: params length:", params.length);
+    const result = await connection.query(queryString, params);
+    resetConnectionTimer();
+    console.log("executeQueryFromString: result:", result);
+    return result;
+  } catch (error) {
+    console.error("executeQueryFromString: error:", error);
+    throw error;
+  }
 };
 
 const getValidJobsAndSearchTerms = async () => {
   const result = await executeQueryFromFile('queries/jobs/getValidJobsAndSearchTerms.sql');
-  return result.rows;
+  console.log("result:", result);
+  return result;
 };
 
 const getJobDetailsById = async (jobId) => {
+
   const result = await executeQueryFromFile('queries/jobs/getJobById.sql', [jobId]);
-  return result.rows;
+  const firstRow = result;
+
+  return firstRow;
 };
 
 const getJobHtmlById = async (jobId) => {
+
   const result = await executeQueryFromFile('queries/jobs/getJobHtmlById.sql', [jobId]);
-  return result.rows;
+  console.log("result:", result);
+  return result;
 };
 
 const getFilteredValidJobsAndSearchTerms = async (filterTerms) => {
-  const queryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms.sql';
-  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [];
-  const result = await executeQueryFromFile(queryFile, params);
-  return result.rows;
+  const headQueryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms1.sql';
+  const tailQueryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms2.sql';
+  const searchTerms = await getSearchTerms();
+  console.log("getFilteredValidJobsAndSearchTerms: searchTerms:", searchTerms);
+  const validTerms = filterTerms.filter(term => searchTerms.includes(term));
+
+  let whereString = "";
+  validTerms.forEach((term, idx) => {
+    if (idx === 0) {
+        whereString = `(CAST(vjt.term_text AS VARCHAR) = CAST('${term}' AS VARCHAR))\n`;
+    } else {
+        whereString += `OR (CAST(vjt.term_text AS VARCHAR) = CAST('${term}' AS VARCHAR))\n`;
+    }
+  });
+  const headString = readQueryFromFile(headQueryFile);
+  const tailString = readQueryFromFile(tailQueryFile);
+  const queryString = headString + whereString + tailString;
+  // const tempFilePath = 'tmp/filteredJobsAndSearchTerms.txt';
+  // fs.writeFile(tempFilePath, queryString, (err) => {
+  //   if (err) {
+  //       console.error('Error writing to file:', err);
+  //   } else {
+  //       console.log('Query string saved to', tempFilePath);
+  //   }
+  // });
+  const result = await executeQueryFromString(queryString, );
+  console.log("getFilteredValidJobsAndSearchTerms: result:", result);
+
+  return result;
 };
+
 
 // getSearchTerms
 const getSearchTerms = async () => {
   const response = await executeQueryFromFile('queries/jobs/getSearchTerms.sql');
-  result = response.rows.map(row => row.term_text);
+  console.log("response:", response);
+  result = response.map(row => row.term_text);
+  console.log("result:", result); 
   return result;
 };
 
@@ -91,8 +158,12 @@ const updateJobField = async (jobId, field, value) => {
   const sqlQuery = readQueryFromFile('queries/jobs/updateJobField.sql');
   const updatedSqlQuery = sqlQuery.replace('{FIELD}', field);
 
-  return await executeQueryFromString(updatedSqlQuery, [value, jobId]);
+  // Pass parameters as an object
+  const params = [ value, jobId ];
+
+  return await executeQueryFromString(updatedSqlQuery, params);
 };
+
 
 
 module.exports = {
