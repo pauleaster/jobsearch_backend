@@ -1,4 +1,5 @@
 import requests
+import json
 
 # Endpoint URLs
 search_terms_url = "http://localhost:3001/api/searchTerms"
@@ -16,7 +17,7 @@ print("\n\n ************* valid request *************\n")
 
 # Test the filteredJobsAndSearchTerms endpoint
 json_payload = {"filterTerms": modified_terms}
-print(f"json_payload:\n{json_payload}\n\n")
+print("json_payload:\n" + json.dumps(json_payload, indent=4) + "\n\n")
 response = requests.post(filtered_jobs_url, json=json_payload)
 filtered_jobs = response.json()
 

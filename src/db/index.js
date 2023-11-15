@@ -4,7 +4,7 @@ const path = require('path');
 const ini = require('ini');
 
 // Read the configuration file
-const configPath = `${process.env.HOME}/.scraper/scraper.conf`;
+const configPath = `${process.env.HOME}/.scraper/scraper_psql.conf`;
 const config = ini.parse(fs.readFileSync(configPath, 'utf-8'));
 
 const AllowedFields = {
