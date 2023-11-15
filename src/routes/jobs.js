@@ -37,11 +37,16 @@ router.get('/job/:jobId/html', handleAsyncRoute(async (req, res) => {
 
   // Check if the job exists
   if (!data || data.length === 0) {
-      return res.status(404).json({ error: 'Job not found' });
+      return res.status(404).send('Job not found');
   }
 
-  return res.json({ jobHtml: data[0].job_html });
+  // Set the Content-Type to text/html
+  res.setHeader('Content-Type', 'text/html');
+
+  // Send the HTML content directly
+  return res.send(data[0].job_html);
 }));
+
 
 router.get('/searchTerms', handleAsyncRoute(async (req, res) => {
   const data = await db.getSearchTerms();
