@@ -24,7 +24,8 @@ WITH ValidJobTerms AS (
     GROUP BY 
         job_id, job_number
     HAVING
-        COUNT(term_text) FILTER (WHERE term_text = ANY($1) OR $1 IS NULL) > 0
+        -- This clause checks if specific terms are provided; if not, defaults to all.
+        COUNT(term_text) FILTER (WHERE ($1 IS NULL OR term_text = ANY($1))) > 0
 )
 
 SELECT 

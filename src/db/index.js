@@ -69,10 +69,12 @@ const getJobHtmlById = async (jobId) => {
 
 const getFilteredValidJobsAndSearchTerms = async (filterTerms) => {
   const queryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms.sql';
-  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [];
+  // Set params to null if filterTerms is not provided or empty
+  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [null];
   const result = await executeQueryFromFile(queryFile, params);
   return result.rows;
 };
+
 
 // getSearchTerms
 const getSearchTerms = async () => {
