@@ -68,12 +68,27 @@ const getJobHtmlById = async (jobId) => {
 };
 
 const getFilteredValidJobsAndSearchTerms = async (filterTerms) => {
-  const queryFile = 'queries/jobs/getFilteredValidJobsAndSearchTerms.sql';
-  // Set params to null if filterTerms is not provided or empty
-  const params = filterTerms && filterTerms.length > 0 ? [filterTerms] : [null];
-  const result = await executeQueryFromFile(queryFile, params);
-  return result.rows;
+  // Choose the appropriate SQL file based on the presence of filterTerms
+  const queryFile = filterTerms && filterTerms.length > 0
+    ? 'queries/jobs/getFilteredValidJobsAndSearchTermsWithFilter.sql'
+    : 'queries/jobs/getFilteredValidJobsAndSearchTermsNoFilter.sql';
+
+  const sqlQuery = readQueryFromFile(queryFile);
+
+  if (filterTerms && filterTerms.length > 0) {
+    // Run the query with filtering parameters
+    const params = [filterTerms];
+    const result = await executeQueryFromString(sqlQuery + ';', params);
+    return result.rows;
+  } else {
+    // Run the query without parameters
+    const result = await executeQueryFromString(sqlQuery + ';');
+    return result.rows;
+  }
 };
+
+
+
 
 
 // getSearchTerms
